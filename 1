@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حسابات المحل">
+<meta name="theme-color" content="#182320">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>دفتر حسابات المحل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#182320; --paper:#F3EFE6; --paper-2:#EAE3D3; --card:#FFFDF8;
+    --brass:#B07A34; --brass-dark:#8C5E23; --brass-light:#F1E2C9;
+    --teal:#2E6659; --teal-light:#DCE9E4; --red:#A3432F; --red-light:#F3E1DB; --line:#D8CFBC;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Tajawal',sans-serif;-webkit-font-smoothing:antialiased;}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--paper);position:relative;padding-bottom:78px;}
+  .num{font-family:'JetBrains Mono',monospace;}
+
+  header{padding:22px 18px 16px;border-bottom:2px solid var(--ink);background:var(--paper);position:relative;}
+  .gear-btn{position:absolute;top:20px;left:16px;background:none;border:1px solid var(--line);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);}
+  .gear-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;}
+  .shop-title{font-size:13px;letter-spacing:0.3px;color:var(--brass-dark);margin:0 0 4px;font-weight:700;}
+  .shop-name{font-size:24px;font-weight:900;margin:0 0 14px;line-height:1.2;}
+  .hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
+  .hero-label{font-size:12px;color:#5b6560;margin:0 0 2px;}
+  .hero-value{font-size:34px;font-weight:700;line-height:1;}
+  .hero-value.pos{color:var(--teal);} .hero-value.neg{color:var(--red);}
+  .hero-sub{text-align:left;font-size:12px;color:#5b6560;}
+  .hero-sub .num{font-size:14px;color:var(--ink);display:block;}
+
+  main{flex:1;padding:16px;}
+  .section-title{font-size:13px;font-weight:700;color:#5b6560;margin:18px 2px 8px;display:flex;justify-content:space-between;align-items:center;}
+  .section-title:first-child{margin-top:0;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
+  .stat-card .lbl{font-size:11.5px;color:#5b6560;margin-bottom:6px;}
+  .stat-card .val{font-size:19px;font-weight:700;}
+  .stat-card.warn .val{color:var(--brass-dark);}
+  .stat-card.alert{border-color:var(--red);} .stat-card.alert .val{color:var(--red);}
+
+  .list-item{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .list-item.low-stock{border-color:var(--red);background:linear-gradient(0deg,var(--red-light) 0%, var(--card) 14%);}
+  .li-main{flex:1;min-width:0;}
+  .li-title{font-size:14.5px;font-weight:700;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .li-sub{font-size:12px;color:#5b6560;margin:0;}
+  .li-note{font-size:11px;color:var(--brass-dark);margin:2px 0 0;}
+  .li-right{text-align:left;flex-shrink:0;}
+  .li-amount{font-size:15px;font-weight:700;}
+  .li-amount.neg{color:var(--red);} .li-amount.pos{color:var(--teal);}
+  .tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;margin-top:3px;margin-left:3px;font-weight:700;}
+  .tag.unpaid{background:var(--red-light);color:var(--red);}
+  .tag.paid{background:var(--teal-light);color:var(--teal);}
+  .tag.low{background:var(--red-light);color:var(--red);}
+  .tag.damaged{background:var(--brass-light);color:var(--brass-dark);}
+  .tag.received{background:var(--paper-2);color:#5b6560;}
+  .tag.delivered{background:var(--teal-light);color:var(--teal);}
+  .tag.sale{background:var(--brass-light);color:var(--brass-dark);}
+
+  .empty{text-align:center;padding:36px 16px;color:#8a9089;font-size:13.5px;border:1px dashed var(--line);border-radius:4px;}
+
+  .icon-btn{background:none;border:none;color:#8a9089;font-size:14px;cursor:pointer;padding:3px 4px;line-height:1;}
+  .icon-btn:hover{color:var(--ink);}
+  .icon-btn.danger:hover{color:var(--red);}
+  .li-actions{display:flex;flex-direction:column;gap:1px;align-items:center;}
+
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;max-width:480px;width:calc(100% - 32px);background:var(--ink);color:var(--paper);border:none;border-radius:6px;padding:14px;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(24,35,32,0.22);}
+  .fab:active{transform:translateX(-50%) scale(0.98);}
+  .fab-row{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;max-width:480px;width:calc(100% - 32px);display:flex;gap:8px;}
+  .fab-row .fab{position:static;transform:none;width:auto;flex:1;}
+  .fab-row .fab.secondary{background:var(--brass-dark);}
+  .fab-row .fab:active{transform:scale(0.98);}
+  .inv-row{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:10px;margin-bottom:8px;}
+  .inv-row-top{display:flex;gap:8px;margin-bottom:8px;}
+  .inv-row-top select{flex:1;}
+  .inv-row-nums{display:flex;gap:8px;align-items:flex-end;}
+  .inv-row-nums .field{flex:1;margin-bottom:0;}
+  .inv-remove{background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:0 4px;}
+  .add-row-btn{width:100%;padding:10px;border:1px dashed var(--line);border-radius:5px;background:none;color:var(--brass-dark);font-family:'Tajawal',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:12px;}
+  .invoice-total-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-top:1px dashed var(--line);margin-top:4px;}
+  .invoice-total-bar .lbl{font-size:13px;color:#5b6560;}
+  .invoice-total-bar .val{font-size:19px;font-weight:700;}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(24,35,32,0.45);display:flex;align-items:flex-end;justify-content:center;z-index:20;}
+  .modal{background:var(--paper);width:100%;max-width:480px;border-radius:14px 14px 0 0;padding:20px 18px 26px;border-top:2px solid var(--ink);animation:slideup 0.22s ease-out;max-height:88vh;overflow-y:auto;}
+  @keyframes slideup{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .modal h3{margin:0 0 16px;font-size:17px;font-weight:900;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:#5b6560;margin-bottom:5px;font-weight:700;}
+  .field input, .field select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:5px;font-family:'Tajawal',sans-serif;font-size:14.5px;background:var(--card);color:var(--ink);}
+  .field input:focus, .field select:focus{outline:2px solid var(--brass);outline-offset:0;}
+  .field-row{display:flex;gap:10px;} .field-row .field{flex:1;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;}
+  .btn{flex:1;padding:12px;border-radius:5px;font-family:'Tajawal',sans-serif;font-size:14.5px;font-weight:700;border:none;cursor:pointer;}
+  .btn-cancel{background:none;border:1px solid var(--line);color:var(--ink);}
+  .btn-save{background:var(--ink);color:var(--paper);}
+  .toggle-row{display:flex;gap:8px;}
+  .toggle-opt{flex:1;text-align:center;padding:10px;border:1px solid var(--line);border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;color:#5b6560;}
+  .toggle-opt.active-a{background:var(--teal-light);border-color:var(--teal);color:var(--teal);}
+  .toggle-opt.active-b{background:var(--red-light);border-color:var(--red);color:var(--red);}
+  .toggle-opt.active-c{background:var(--brass-light);border-color:var(--brass);color:var(--brass-dark);}
+  .hint{font-size:11.5px;color:#5b6560;margin:-4px 0 12px;}
+
+  .report-card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:10px;cursor:pointer;}
+  .report-card .rc-head{display:flex;justify-content:space-between;align-items:center;}
+  .report-card .rc-month{font-size:14.5px;font-weight:700;}
+  .report-card .rc-profit{font-size:16px;font-weight:700;}
+  .report-detail{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);display:grid;grid-template-columns:1fr 1fr;gap:9px;font-size:12.5px;}
+  .report-detail div span{display:block;color:#5b6560;font-size:11px;}
+  .report-detail div b{font-size:14px;}
+
+  nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--card);border-top:2px solid var(--ink);display:flex;z-index:10;}
+  .nav-btn{flex:1;background:none;border:none;padding:10px 2px 8px;font-family:'Tajawal',sans-serif;font-size:10.6px;font-weight:700;color:#8a9089;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;}
+  .nav-btn svg{width:19px;height:19px;stroke:#8a9089;fill:none;stroke-width:1.8;}
+  .nav-btn.active{color:var(--ink);}
+  .nav-btn.active svg{stroke:var(--brass-dark);}
+  .nav-btn.active::after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:20px;height:2px;background:var(--brass);}
+  .nav-dot{position:absolute;top:5px;left:calc(50% + 9px);width:7px;height:7px;border-radius:50%;background:var(--red);}
+
+  .loading{text-align:center;padding:60px 20px;color:#8a9089;font-size:13.5px;}
+  .backup-row{display:flex;flex-direction:column;gap:10px;}
+  .backup-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:5px;border:1px solid var(--line);background:var(--card);font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading" id="loading">جارِ تحميل البيانات...</div>
+</div>
+<input type="file" id="importFile" accept="application/json" style="display:none">
+
+<script>
+const K_REPAIRS='repairs', K_EXPENSES='expenses', K_PARTS='parts', K_DAMAGED='damaged', K_SALES='sales', K_STOCKLOG='stockLog', K_INVOICES='invoices';
+
+let repairs=[], expenses=[], parts=[], damaged=[], sales=[], stockLog=[], invoices=[];
+let activeTab='home';
+let modalOpen=null; // repair|expense|part|damaged|sell|invoice|settings
+let paidState=false, statusState='received';
+let editingPartId=null, damagedForPartId=null, sellForPartId=null, adjustQtyForPartId=null;
+let expandedMonth=null, expandedInvoiceId=null;
+let draftInvoice=[];
+let deferredPromptEvent=null;
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferredPromptEvent=e; });
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(err){ console.error('SW registration failed', err); });
+  });
+}
+
+const app = document.getElementById('app');
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){ return new Date().toLocaleDateString('ar-EG', { day:'numeric', month:'short' }); }
+function fullDate(ts){ return new Date(ts).toLocaleDateString('ar-EG', { day:'numeric', month:'short', year:'numeric' }); }
+function monthKey(ts){ const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function monthLabel(key){ const [y,m]=key.split('-'); const d=new Date(Number(y), Number(m)-1, 1); return d.toLocaleDateString('ar-EG',{month:'long', year:'numeric'}); }
+function money(n){ return Number(n).toLocaleString('en-US', {maximumFractionDigits:0}); }
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+const STORAGE_PREFIX = 'shop_accounts_';
+
+async function loadData(){
+  const map = [['repairs',K_REPAIRS],['expenses',K_EXPENSES],['parts',K_PARTS],['damaged',K_DAMAGED],['sales',K_SALES],['stockLog',K_STOCKLOG],['invoices',K_INVOICES]];
+  for(const [v,key] of map){
+    try{ const raw = localStorage.getItem(STORAGE_PREFIX+key); const val = raw ? JSON.parse(raw) : []; setVar(v,val); }
+    catch(e){ setVar(v,[]); }
+  }
+  render();
+}
+function setVar(name,val){
+  if(name==='repairs') repairs=val;
+  if(name==='expenses') expenses=val;
+  if(name==='parts') parts=val;
+  if(name==='damaged') damaged=val;
+  if(name==='sales') sales=val;
+  if(name==='stockLog') stockLog=val;
+  if(name==='invoices') invoices=val;
+}
+async function saveRepairs(){ try{ localStorage.setItem(STORAGE_PREFIX+K_REPAIRS, JSON.stringify(repairs)); }catch(e){console.error(e);} }
+async function saveExpenses(){ try{ localStorage.setItem(STORAGE_PREFIX+K_EXPENSES, JSON.stringify(expenses)); }catch(e){console.error(e);} }
+async function saveParts(){ try{ localStorage.setItem(STORAGE_PREFIX+K_PARTS, JSON.stringify(parts)); }catch(e){console.error(e);} }
+async function saveDamaged(){ try{ localStorage.setItem(STORAGE_PREFIX+K_DAMAGED, JSON.stringify(damaged)); }catch(e){console.error(e);} }
+async function saveSales(){ try{ localStorage.setItem(STORAGE_PREFIX+K_SALES, JSON.stringify(sales)); }catch(e){console.error(e);} }
+async function saveStockLog(){ try{ localStorage.setItem(STORAGE_PREFIX+K_STOCKLOG, JSON.stringify(stockLog)); }catch(e){console.error(e);} }
+async function saveInvoices(){ try{ localStorage.setItem(STORAGE_PREFIX+K_INVOICES, JSON.stringify(invoices)); }catch(e){console.error(e);} }
+
+function totals(){
+  const paidRepairs = repairs.filter(r=>r.paid);
+  const repairsRevenue = paidRepairs.reduce((s,r)=>s+Number(r.cost),0);
+  const repairsPartsCost = repairs.reduce((s,r)=> s + (r.partUsed? Number(r.partUsed.wholesale)*Number(r.partUsed.qty) : 0), 0);
+  const pendingCount = repairs.filter(r=>!r.paid).length;
+  const pendingSum = repairs.filter(r=>!r.paid).reduce((s,r)=>s+Number(r.cost),0);
+  const notDelivered = repairs.filter(r=>r.status!=='delivered').length;
+  const expTotal = expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const damagedTotal = damaged.reduce((s,d)=>s+Number(d.value),0);
+  const salesRevenue = sales.reduce((s,x)=>s+Number(x.total),0) + invoices.reduce((s,x)=>s+Number(x.total),0);
+  const salesProfit = sales.reduce((s,x)=>s+Number(x.profit),0) + invoices.reduce((s,x)=>s+Number(x.profit),0);
+  const lowStock = parts.filter(p=>Number(p.qty) <= Number(p.threshold));
+  const stockValue = parts.reduce((s,p)=>s+Number(p.qty)*Number(p.wholesale),0);
+  const profit = (repairsRevenue - repairsPartsCost) + salesProfit - expTotal - damagedTotal;
+  return {repairsRevenue, repairsPartsCost, pendingCount, pendingSum, notDelivered, expTotal, damagedTotal, salesRevenue, salesProfit, lowStock, stockValue, profit};
+}
+
+function icon(name){
+  const icons = {
+    home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+    wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2.6-.6-.6-2.6 2.8-2.8Z"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M9 9.5c0-1 1-1.8 3-1.8s3 .8 3 1.8-1 1.5-3 1.8-3 .8-3 1.9 1.3 1.8 3 1.8 3-.8 3-1.8"/>',
+    box: '<path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+    chart: '<path d="M4 19V10"/><path d="M11 19V5"/><path d="M18 19v-7"/><path d="M3 19h18"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/>',
+    cart: '<circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>',
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6"/><path d="M9 12h6"/>'
+  };
+  return '<svg viewBox="0 0 24 24">'+icons[name]+'</svg>';
+}
+
+function render(){
+  document.getElementById('loading')?.remove();
+  const t = totals();
+
+  let html = `
+    <header>
+      <button class="gear-btn" onclick="openModal('settings')">${icon('gear')}</button>
+      <p class="shop-title">دفتر الحسابات</p>
+      <h1 class="shop-name">محل الصيانة</h1>
+      <div class="hero-row">
+        <div>
+          <p class="hero-label">صافي الربح</p>
+          <p class="hero-value ${t.profit>=0?'pos':'neg'} num">${money(t.profit)} ج.م</p>
+        </div>
+        <div class="hero-sub">
+          <span>اليوم ${todayStr()}</span>
+          <span class="num">${repairs.length} صيانة · ${parts.length} صنف</span>
+        </div>
+      </div>
+    </header>
+    <main>
+  `;
+
+  if(activeTab==='home') html += renderHome(t);
+  if(activeTab==='repairs') html += renderRepairs();
+  if(activeTab==='inventory') html += renderInventory(t);
+  if(activeTab==='expenses') html += renderExpenses();
+  if(activeTab==='report') html += renderReport();
+
+  html += `</main>`;
+
+  if(activeTab==='repairs') html += `<button class="fab" onclick="openModal('repair')">+ استلام جهاز للصيانة</button>`;
+  if(activeTab==='expenses') html += `<button class="fab" onclick="openModal('expense')">+ إضافة مصروف</button>`;
+  if(activeTab==='inventory') html += `<div class="fab-row"><button class="fab" onclick="openModal('part')">+ إضافة منتج</button><button class="fab secondary" onclick="openInvoiceModal()">+ فاتورة بيع</button></div>`;
+
+  html += `
+    <nav>
+      <button class="nav-btn ${activeTab==='home'?'active':''}" onclick="setTab('home')">${icon('home')}<span>الرئيسية</span></button>
+      <button class="nav-btn ${activeTab==='repairs'?'active':''}" onclick="setTab('repairs')">${icon('wrench')}<span>الصيانة</span>${t.notDelivered>0?'<span class="nav-dot"></span>':''}</button>
+      <button class="nav-btn ${activeTab==='inventory'?'active':''}" onclick="setTab('inventory')">${icon('box')}<span>المخزون</span>${t.lowStock.length>0?'<span class="nav-dot"></span>':''}</button>
+      <button class="nav-btn ${activeTab==='expenses'?'active':''}" onclick="setTab('expenses')">${icon('coin')}<span>المصروفات</span></button>
+      <button class="nav-btn ${activeTab==='report'?'active':''}" onclick="setTab('report')">${icon('chart')}<span>التقرير</span></button>
+    </nav>
+  `;
+
+  if(modalOpen==='repair') html += repairModalHtml();
+  if(modalOpen==='expense') html += expenseModalHtml();
+  if(modalOpen==='part') html += partModalHtml();
+  if(modalOpen==='damaged') html += damagedModalHtml();
+  if(modalOpen==='sell') html += sellModalHtml();
+  if(modalOpen==='invoice') html += invoiceModalHtml();
+  if(modalOpen==='adjustqty') html += adjustQtyModalHtml();
+  if(modalOpen==='settings') html += settingsModalHtml();
+  if(modalOpen==='install') html += installModalHtml();
+
+  app.innerHTML = html;
+  if(modalOpen==='settings'){
+    document.getElementById('importFile').onchange = handleImportFile;
+  }
+}
+
+function renderHome(t){
+  let h = `
+    <p class="section-title">نظرة عامة</p>
+    <div class="stat-grid">
+      <div class="stat-card"><p class="lbl">إيراد الصيانة</p><p class="val num" style="color:var(--teal)">${money(t.repairsRevenue)}</p></div>
+      <div class="stat-card"><p class="lbl">مكسب بيع المنتجات</p><p class="val num" style="color:var(--teal)">${money(t.salesProfit)}</p></div>
+      <div class="stat-card"><p class="lbl">مصروفات المحل</p><p class="val num" style="color:var(--red)">${money(t.expTotal)}</p></div>
+      <div class="stat-card"><p class="lbl">خسائر بضاعة تالفة</p><p class="val num" style="color:var(--brass-dark)">${money(t.damagedTotal)}</p></div>
+      <div class="stat-card warn"><p class="lbl">مستحقات لم تُحصَّل</p><p class="val num">${money(t.pendingSum)}</p></div>
+      <div class="stat-card"><p class="lbl">قيمة المخزون (جملة)</p><p class="val num">${money(t.stockValue)}</p></div>
+      <div class="stat-card ${t.lowStock.length>0?'alert':''}"><p class="lbl">أصناف قاربت تخلص</p><p class="val num">${t.lowStock.length}</p></div>
+      <div class="stat-card ${t.notDelivered>0?'alert':''}"><p class="lbl">أجهزة لسه في المحل</p><p class="val num">${t.notDelivered}</p></div>
+    </div>
+  `;
+  if(t.lowStock.length>0){
+    h += `<p class="section-title">تنبيه نقص مخزون</p>`;
+    t.lowStock.forEach(p=>{
+      h += `<div class="list-item low-stock"><div class="li-main"><p class="li-title">${escapeHtml(p.name)}</p><p class="li-sub">الكمية الحالية: ${p.qty} · الحد الأدنى: ${p.threshold}</p></div><span class="tag low">وشيك النفاد</span></div>`;
+    });
+  }
+  h += `<p class="section-title">آخر النشاط</p>`;
+  const combined = [
+    ...repairs.map(r=>({...r,_type:'repair'})),
+    ...expenses.map(e=>({...e,_type:'expense'})),
+    ...sales.map(s=>({...s,_type:'sale'})),
+    ...invoices.map(i=>({...i,_type:'invoice'}))
+  ].sort((a,b)=>b.date-a.date).slice(0,6);
+  if(combined.length===0){ h += `<div class="empty">لسه مفيش أي عمليات مسجّلة</div>`; }
+  else { combined.forEach(item=>{
+    if(item._type==='repair') h += repairItemHtml(item);
+    else if(item._type==='sale') h += saleItemHtml(item);
+    else if(item._type==='invoice') h += invoiceItemHtml(item);
+    else h += expenseItemHtml(item);
+  }); }
+  return h;
+}
+
+function renderRepairs(){
+  let h = `<p class="section-title">عمليات الصيانة</p>`;
+  if(repairs.length===0){ h += `<div class="empty">مفيش صيانات مسجّلة لسه<br>دوس على "استلام جهاز للصيانة" تحت</div>`; }
+  else { [...repairs].sort((a,b)=>b.date-a.date).forEach(r=> h += repairItemHtml(r)); }
+  return h;
+}
+function renderExpenses(){
+  let h = `<p class="section-title">مصروفات المحل</p>`;
+  if(expenses.length===0){ h += `<div class="empty">مفيش مصروفات مسجّلة لسه<br>دوس على "إضافة مصروف" تحت</div>`; }
+  else { [...expenses].sort((a,b)=>b.date-a.date).forEach(e=> h += expenseItemHtml(e)); }
+  return h;
+}
+
+function renderInventory(t){
+  let h = `<p class="section-title">قطع الغيار والمنتجات <span style="font-weight:400;font-size:11px">${parts.length} صنف</span></p>`;
+  if(parts.length===0){
+    h += `<div class="empty">مفيش منتجات مسجّلة لسه<br>دوس على "إضافة منتج" تحت</div>`;
+  } else {
+    [...parts].sort((a,b)=> (a.qty<=a.threshold?-1:1) - (b.qty<=b.threshold?-1:1)).forEach(p=>{
+      const low = Number(p.qty) <= Number(p.threshold);
+      h += `<div class="list-item ${low?'low-stock':''}">
+        <div class="li-main">
+          <p class="li-title">${escapeHtml(p.name)}</p>
+          <p class="li-sub">الكمية: <b class="num">${p.qty}</b> · جملة <span class="num">${money(p.wholesale)}</span> · بيع <span class="num">${money(p.sell)}</span></p>
+          ${low?`<span class="tag low">تحت الحد الأدنى (${p.threshold})</span>`:''}
+        </div>
+        <div class="li-actions">
+          <button class="icon-btn" onclick="openSellModal('${p.id}')" title="بيع">${icon('cart')}</button>
+          <button class="icon-btn" onclick="openAdjustQtyModal('${p.id}')" title="تعديل الكمية">±</button>
+          <button class="icon-btn" onclick="editPart('${p.id}')" title="تعديل">✎</button>
+          <button class="icon-btn" onclick="openDamagedModal('${p.id}')" title="تسجيل تالف">⚠</button>
+          <button class="icon-btn danger" onclick="deletePart('${p.id}')" title="حذف">✕</button>
+        </div>
+      </div>`;
+    });
+  }
+  h += `<p class="section-title">سجل المبيعات <span style="font-weight:400;font-size:11px">مكسب ${money(t.salesProfit)}</span></p>`;
+  if(sales.length===0){ h += `<div class="empty">لسه مفيش عمليات بيع منتجات</div>`; }
+  else { [...sales].sort((a,b)=>b.date-a.date).slice(0,8).forEach(s=> h += saleItemHtml(s)); }
+
+  h += `<p class="section-title">فواتير البيع <span style="font-weight:400;font-size:11px">${invoices.length} فاتورة</span></p>`;
+  if(invoices.length===0){ h += `<div class="empty">لسه مفيش فواتير بيع مسجّلة<br>دوس على "فاتورة بيع" تحت</div>`; }
+  else { [...invoices].sort((a,b)=>b.date-a.date).forEach(inv=> h += invoiceItemHtml(inv)); }
+
+  h += `<p class="section-title">البضاعة التالفة <span style="font-weight:400;font-size:11px">خسارة ${money(t.damagedTotal)}</span></p>`;
+  if(damaged.length===0){ h += `<div class="empty">مفيش بضاعة تالفة مسجّلة</div>`; }
+  else { [...damaged].sort((a,b)=>b.date-a.date).slice(0,8).forEach(d=>{
+    h += `<div class="list-item">
+      <div class="li-main"><p class="li-title">${escapeHtml(d.partName)}</p><p class="li-sub">كمية: ${d.qty} · ${escapeHtml(d.reason||'—')} · ${fullDate(d.date)}</p></div>
+      <div class="li-right"><p class="li-amount neg num">-${money(d.value)}</p><span class="tag damaged">تالف</span></div>
+      <button class="icon-btn danger" onclick="deleteDamaged('${d.id}')">✕</button>
+    </div>`;
+  }); }
+  return h;
+}
+
+function renderReport(){
+  const months = {};
+  function ensure(k){ months[k] = months[k] || {repRev:0, repParts:0, jobs:0, salesRev:0, salesProfit:0, expenses:0, damaged:0, stockAddQty:0, stockAddCost:0}; }
+  repairs.forEach(r=>{ const k=monthKey(r.date); ensure(k); if(r.paid){ months[k].repRev += Number(r.cost); months[k].jobs += 1; } if(r.partUsed) months[k].repParts += Number(r.partUsed.wholesale)*Number(r.partUsed.qty); });
+  expenses.forEach(e=>{ const k=monthKey(e.date); ensure(k); months[k].expenses += Number(e.amount); });
+  damaged.forEach(d=>{ const k=monthKey(d.date); ensure(k); months[k].damaged += Number(d.value); });
+  sales.forEach(s=>{ const k=monthKey(s.date); ensure(k); months[k].salesRev += Number(s.total); months[k].salesProfit += Number(s.profit); });
+  invoices.forEach(inv=>{ const k=monthKey(inv.date); ensure(k); months[k].salesRev += Number(inv.total); months[k].salesProfit += Number(inv.profit); });
+  stockLog.forEach(l=>{ const k=monthKey(l.date); ensure(k); months[k].stockAddQty += Number(l.qtyAdded); months[k].stockAddCost += Number(l.cost); });
+
+  const keys = Object.keys(months).sort().reverse();
+  let h = `<p class="section-title">التقرير الشهري</p>`;
+  if(keys.length===0){ h += `<div class="empty">لسه مفيش بيانات كفاية لعرض تقرير</div>`; return h; }
+  keys.forEach(k=>{
+    const m = months[k];
+    const profit = (m.repRev - m.repParts) + m.salesProfit - m.expenses - m.damaged;
+    const open = expandedMonth===k;
+    h += `<div class="report-card" onclick="toggleMonth('${k}')">
+      <div class="rc-head"><span class="rc-month">${monthLabel(k)}</span><span class="rc-profit num" style="color:${profit>=0?'var(--teal)':'var(--red)'}">${money(profit)}</span></div>
+      ${open?`<div class="report-detail">
+        <div><span>إيراد الصيانة</span><b class="num" style="color:var(--teal)">${money(m.repRev)}</b></div>
+        <div><span>عدد الصيانات المدفوعة</span><b class="num">${m.jobs}</b></div>
+        <div><span>تكلفة قطع مستخدمة</span><b class="num" style="color:var(--red)">${money(m.repParts)}</b></div>
+        <div><span>إيراد بيع المنتجات</span><b class="num" style="color:var(--teal)">${money(m.salesRev)}</b></div>
+        <div><span>مكسب بيع المنتجات</span><b class="num" style="color:var(--teal)">${money(m.salesProfit)}</b></div>
+        <div><span>مصروفات المحل</span><b class="num" style="color:var(--red)">${money(m.expenses)}</b></div>
+        <div><span>خسائر التالف</span><b class="num" style="color:var(--brass-dark)">${money(m.damaged)}</b></div>
+        <div><span>صافي حركة المخزون</span><b class="num">${m.stockAddQty>=0?'+':''}${m.stockAddQty} قطعة (${money(m.stockAddCost)})</b></div>
+      </div>`:''}
+    </div>`;
+  });
+  return h;
+}
+
+function repairItemHtml(r){
+  return `<div class="list-item">
+    <div class="li-main">
+      <p class="li-title">${escapeHtml(r.customer)} — ${escapeHtml(r.device)}</p>
+      <p class="li-sub">${escapeHtml(r.issue)} · ${fullDate(r.date)}</p>
+      ${r.partUsed?`<p class="li-note">قطعة مستخدمة: ${escapeHtml(r.partUsed.partName)} (تكلفة ${money(r.partUsed.wholesale*r.partUsed.qty)})</p>`:''}
+    </div>
+    <div class="li-right">
+      <p class="li-amount ${r.paid?'pos':''} num">${money(r.cost)}</p>
+      <span class="tag ${r.paid?'paid':'unpaid'}">${r.paid?'اتحصّل':'معلّق'}</span>
+      <span class="tag ${r.status==='delivered'?'delivered':'received'}" onclick="event.stopPropagation();toggleDeliveryStatus('${r.id}')" style="cursor:pointer">${r.status==='delivered'?'تم التسليم':'في المحل'}</span>
+    </div>
+    <button class="icon-btn danger" onclick="deleteRepair('${r.id}')">✕</button>
+  </div>`;
+}
+function expenseItemHtml(e){
+  return `<div class="list-item">
+    <div class="li-main"><p class="li-title">${escapeHtml(e.desc)}</p><p class="li-sub">${escapeHtml(e.category)} · ${fullDate(e.date)}</p></div>
+    <div class="li-right"><p class="li-amount neg num">-${money(e.amount)}</p></div>
+    <button class="icon-btn danger" onclick="deleteExpense('${e.id}')">✕</button>
+  </div>`;
+}
+function saleItemHtml(s){
+  return `<div class="list-item">
+    <div class="li-main"><p class="li-title">بيع: ${escapeHtml(s.partName)}</p><p class="li-sub">كمية ${s.qty} × ${money(s.unitPrice)} · ${fullDate(s.date)}</p></div>
+    <div class="li-right"><p class="li-amount pos num">${money(s.total)}</p><span class="tag sale">مكسب ${money(s.profit)}</span></div>
+    <button class="icon-btn danger" onclick="deleteSale('${s.id}')">✕</button>
+  </div>`;
+}
+function invoiceItemHtml(inv){
+  const open = expandedInvoiceId===inv.id;
+  let h = `<div class="report-card" onclick="toggleInvoice('${inv.id}')">
+    <div class="rc-head">
+      <span class="rc-month">فاتورة (${inv.items.length} صنف) · ${fullDate(inv.date)}</span>
+      <span class="rc-profit num" style="color:var(--teal)">${money(inv.total)}</span>
+    </div>`;
+  if(open){
+    h += `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">`;
+    inv.items.forEach(it=>{
+      h += `<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px">
+        <span>${escapeHtml(it.partName)} × ${it.qty}</span>
+        <span class="num">${money(it.lineTotal)}</span>
+      </div>`;
+    });
+    h += `<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)">
+      <span style="color:#5b6560">إجمالي المكسب</span><span class="num" style="color:var(--teal);font-weight:700">${money(inv.profit)}</span>
+    </div>
+    <button class="icon-btn danger" onclick="event.stopPropagation();deleteInvoice('${inv.id}')" style="margin-top:6px">✕ حذف الفاتورة</button>
+    </div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+function repairModalHtml(){
+  const partsOptions = parts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (متاح ${p.qty})</option>`).join('');
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>استلام جهاز للصيانة</h3>
+      <div class="field"><label>اسم العميل</label><input id="f-customer" placeholder="مثلاً: أحمد محمد"></div>
+      <div class="field"><label>الجهاز</label><input id="f-device" placeholder="مثلاً: آيفون 13"></div>
+      <div class="field"><label>العطل</label><input id="f-issue" placeholder="مثلاً: تغيير شاشة"></div>
+      <div class="field"><label>السعر بعد الإصلاح (المطلوب من العميل)</label><input id="f-cost" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label>قطعة غيار مستخدمة (اختياري)</label>
+        <select id="f-partused" onchange="document.getElementById('partqty-wrap').style.display=this.value?'block':'none'">
+          <option value="">بدون قطعة</option>${partsOptions}
+        </select>
+      </div>
+      <div class="field" id="partqty-wrap" style="display:none"><label>الكمية المستخدمة</label><input id="f-partqty" type="number" value="1" min="1"></div>
+      <div class="field"><label>حالة الدفع</label>
+        <div class="toggle-row">
+          <div class="toggle-opt ${paidState?'active-a':''}" onclick="setPaid(true)">اتحصّل</div>
+          <div class="toggle-opt ${!paidState?'active-b':''}" onclick="setPaid(false)">معلّق</div>
+        </div>
+      </div>
+      <div class="field"><label>حالة الجهاز</label>
+        <div class="toggle-row">
+          <div class="toggle-opt ${statusState==='received'?'active-c':''}" onclick="setStatus('received')">في المحل</div>
+          <div class="toggle-opt ${statusState==='delivered'?'active-a':''}" onclick="setStatus('delivered')">تم التسليم</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitRepair()">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+function expenseModalHtml(){
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>إضافة مصروف</h3>
+      <div class="field"><label>الوصف</label><input id="f-desc" placeholder="مثلاً: إيجار الشهر"></div>
+      <div class="field"><label>النوع</label>
+        <select id="f-category">
+          <option value="إيجار">إيجار</option><option value="كهرباء">كهرباء</option><option value="أدوات">أدوات</option>
+          <option value="مرتبات">مرتبات</option><option value="صيانة المحل">صيانة المحل</option><option value="أخرى">أخرى</option>
+        </select>
+      </div>
+      <div class="field"><label>المبلغ (ج.م)</label><input id="f-amount" type="number" inputmode="decimal" placeholder="0"></div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitExpense()">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+function partModalHtml(){
+  const editing = editingPartId ? parts.find(p=>p.id===editingPartId) : null;
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>${editing?'تعديل منتج':'إضافة منتج'}</h3>
+      <div class="field"><label>اسم المنتج / القطعة</label><input id="f-pname" value="${editing?escapeHtml(editing.name):''}" placeholder="مثلاً: شاشة سامسونج A54"></div>
+      <div class="field-row">
+        <div class="field"><label>الكمية</label><input id="f-pqty" type="number" inputmode="numeric" value="${editing?editing.qty:''}" placeholder="0"></div>
+        <div class="field"><label>الحد الأدنى للتنبيه</label><input id="f-pthreshold" type="number" inputmode="numeric" value="${editing?editing.threshold:'2'}" placeholder="2"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>سعر الجملة</label><input id="f-pwholesale" type="number" inputmode="decimal" value="${editing?editing.wholesale:''}" placeholder="0"></div>
+        <div class="field"><label>سعر البيع</label><input id="f-psell" type="number" inputmode="decimal" value="${editing?editing.sell:''}" placeholder="0"></div>
+      </div>
+      ${editing?'<p class="hint">لو زوّدت الكمية هيتسجل تلقائي كإضافة مخزون في التقرير الشهري</p>':''}
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitPart()">${editing?'حفظ التعديل':'حفظ'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function damagedModalHtml(){
+  const p = parts.find(x=>x.id===damagedForPartId);
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>تسجيل بضاعة تالفة — ${p?escapeHtml(p.name):''}</h3>
+      <div class="field"><label>الكمية التالفة</label><input id="f-dqty" type="number" inputmode="numeric" placeholder="1" max="${p?p.qty:''}"></div>
+      <div class="field"><label>السبب (اختياري)</label><input id="f-dreason" placeholder="مثلاً: وقعت أثناء التركيب"></div>
+      <p class="hint">هيتم خصم الكمية من المخزون تلقائي، والخسارة هتتحسب بسعر الجملة</p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitDamaged()">تسجيل</button>
+      </div>
+    </div>
+  </div>`;
+}
+function adjustQtyModalHtml(){
+  const p = parts.find(x=>x.id===adjustQtyForPartId);
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>تعديل الكمية — ${p?escapeHtml(p.name):''}</h3>
+      <p class="hint">الكمية الحالية في المخزون: <b class="num">${p?p.qty:0}</b></p>
+      <div class="field"><label>نوع الحركة</label>
+        <div class="toggle-row">
+          <div class="toggle-opt ${statusState==='received'?'active-a':''}" onclick="setStatus('received')">إضافة كمية</div>
+          <div class="toggle-opt ${statusState==='delivered'?'active-b':''}" onclick="setStatus('delivered')">خصم كمية</div>
+        </div>
+      </div>
+      <div class="field"><label>الكمية</label><input id="f-aqty" type="number" inputmode="numeric" placeholder="0"></div>
+      <p class="hint">${statusState==='received'?'هتتضاف للمخزون وتتسجل كإضافة في التقرير الشهري':'هتتخصم من المخزون وتتسجل في التقرير الشهري'}</p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitAdjustQty()">حفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+function sellModalHtml(){
+  const p = parts.find(x=>x.id===sellForPartId);
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>بيع منتج — ${p?escapeHtml(p.name):''}</h3>
+      <div class="field-row">
+        <div class="field"><label>الكمية</label><input id="f-sqty" type="number" inputmode="numeric" value="1" max="${p?p.qty:''}"></div>
+        <div class="field"><label>سعر الوحدة</label><input id="f-sprice" type="number" inputmode="decimal" value="${p?p.sell:''}"></div>
+      </div>
+      <p class="hint">متاح في المخزون: ${p?p.qty:0} — تكلفة الجملة ${p?money(p.wholesale):0} للوحدة</p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitSale()">تسجيل البيع</button>
+      </div>
+    </div>
+  </div>`;
+}
+function invoiceModalHtml(){
+  const partsOptions = (selectedId)=> parts.map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escapeHtml(p.name)} (متاح ${p.qty})</option>`).join('');
+  let rowsHtml = draftInvoice.map((row,idx)=>`
+    <div class="inv-row">
+      <div class="inv-row-top">
+        <select onchange="onInvoicePartChange(${idx}, this.value)">
+          <option value="">اختر صنف</option>${partsOptions(row.partId)}
+        </select>
+        ${draftInvoice.length>1?`<button class="inv-remove" onclick="removeInvoiceRow(${idx})">✕</button>`:''}
+      </div>
+      <div class="inv-row-nums">
+        <div class="field"><label>الكمية</label><input type="number" inputmode="numeric" value="${row.qty}" oninput="onInvoiceQtyInput(${idx}, this.value)"></div>
+        <div class="field"><label>سعر الوحدة</label><input type="number" inputmode="decimal" value="${row.unitPrice}" oninput="onInvoicePriceInput(${idx}, this.value)"></div>
+      </div>
+    </div>
+  `).join('');
+  const total = draftInvoice.reduce((s,r)=>s+(Number(r.qty)||0)*(Number(r.unitPrice)||0),0);
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>فاتورة بيع</h3>
+      <div id="invoice-rows">${rowsHtml}</div>
+      <button class="add-row-btn" onclick="addInvoiceRow()">+ إضافة صنف تاني للفاتورة</button>
+      <div class="invoice-total-bar"><span class="lbl">إجمالي الفاتورة</span><span class="val num" id="invoice-total-display">${money(total)}</span></div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">إلغاء</button>
+        <button class="btn btn-save" onclick="submitInvoice()">حفظ الفاتورة</button>
+      </div>
+    </div>
+  </div>`;
+}
+function settingsModalHtml(){
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>النسخة الاحتياطية</h3>
+      <p class="hint" style="margin-bottom:14px">بياناتك متخزنة على الجهاز ده بس (مش على أي سيرفر أو حساب). لو غيّرت المتصفح أو مسحت بيانات المتصفح أو استخدمت جهاز تاني، البيانات مش هتكون موجودة هناك — عشان كده صدّر نسخة احتياطية بشكل دوري واحفظها (واتساب لنفسك، إيميل، أو ملفات الهاتف)، وتقدر تستوردها في أي وقت على أي جهاز ترجع بيها كل حاجة زي ما كانت.</p>
+      <div class="backup-row">
+        <button class="backup-btn" onclick="handleInstallClick()">📲 تثبيت التطبيق على الشاشة الرئيسية</button>
+        <button class="backup-btn" onclick="exportBackup()">⬇ تصدير نسخة احتياطية</button>
+        <button class="backup-btn" onclick="document.getElementById('importFile').click()">⬆ استيراد نسخة احتياطية</button>
+      </div>
+      <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">إغلاق</button></div>
+    </div>
+  </div>`;
+}
+function detectPlatform(){
+  const ua = navigator.userAgent || '';
+  if(/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if(/Android/.test(ua)) return 'android';
+  return 'desktop';
+}
+function installModalHtml(){
+  const platform = detectPlatform();
+  let steps = '';
+  if(platform==='ios'){
+    steps = `
+      <p class="li-sub" style="margin-bottom:8px">١. دوس على زرار المشاركة (Share) تحت في متصفح Safari</p>
+      <p class="li-sub" style="margin-bottom:8px">٢. مرّر لحد ما تلاقي "إضافة إلى الشاشة الرئيسية" (Add to Home Screen)</p>
+      <p class="li-sub">٣. دوس "إضافة" — هيظهر أيقونة التطبيق في شاشتك الرئيسية</p>
+    `;
+  } else if(platform==='android'){
+    steps = `
+      <p class="li-sub" style="margin-bottom:8px">١. دوس على أيقونة الثلاث نقط ⋮ فوق في المتصفح</p>
+      <p class="li-sub" style="margin-bottom:8px">٢. اختار "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق"</p>
+      <p class="li-sub">٣. أكّد — هيظهر أيقونة التطبيق زي أي تطبيق تاني</p>
+    `;
+  } else {
+    steps = `
+      <p class="li-sub" style="margin-bottom:8px">افتح الصفحة من متصفح على الموبايل (Chrome أو Safari) بدل الكمبيوتر</p>
+      <p class="li-sub">وبعدين هتلاقي خيار "إضافة إلى الشاشة الرئيسية" من قايمة المتصفح</p>
+    `;
+  }
+  return `<div class="modal-backdrop" onclick="closeModalBg(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>تثبيت التطبيق على الشاشة الرئيسية</h3>
+      ${steps}
+      <div class="modal-actions"><button class="btn btn-save" onclick="closeModal()">تمام، فهمت</button></div>
+    </div>
+  </div>`;
+}
+async function handleInstallClick(){
+  if(deferredPromptEvent){
+    modalOpen=null; render();
+    deferredPromptEvent.prompt();
+    try{ await deferredPromptEvent.userChoice; }catch(e){}
+    deferredPromptEvent=null;
+  } else {
+    modalOpen='install'; render();
+  }
+}
+
+function setTab(tab){ activeTab=tab; expandedMonth=null; render(); }
+function openModal(type){ modalOpen=type; paidState=false; statusState='received'; render(); }
+function closeModal(){ modalOpen=null; editingPartId=null; damagedForPartId=null; sellForPartId=null; render(); }
+function closeModalBg(ev){ if(ev.target.classList.contains('modal-backdrop')) closeModal(); }
+function setPaid(val){ paidState=val; render(); }
+function setStatus(val){ statusState=val; render(); }
+function toggleMonth(k){ expandedMonth = expandedMonth===k ? null : k; render(); }
+
+async function toggleDeliveryStatus(id){
+  const r = repairs.find(x=>x.id===id);
+  r.status = r.status==='delivered' ? 'received' : 'delivered';
+  render(); await saveRepairs();
+}
+
+async function submitRepair(){
+  const customer=document.getElementById('f-customer').value.trim();
+  const device=document.getElementById('f-device').value.trim();
+  const issue=document.getElementById('f-issue').value.trim();
+  const cost=parseFloat(document.getElementById('f-cost').value);
+  const partId=document.getElementById('f-partused').value;
+  const partQty=parseFloat(document.getElementById('f-partqty')?.value || '1');
+  if(!customer||!device||isNaN(cost)){ alert('من فضلك املأ اسم العميل والجهاز والسعر'); return; }
+  let partUsed=null;
+  if(partId){
+    const p = parts.find(x=>x.id===partId);
+    if(!p || partQty>Number(p.qty)){ alert('الكمية المطلوبة من القطعة غير متاحة في المخزون'); return; }
+    p.qty = Number(p.qty) - partQty;
+    partUsed = {partId:p.id, partName:p.name, qty:partQty, wholesale:Number(p.wholesale)};
+  }
+  repairs.push({id:uid(), customer, device, issue: issue||'—', cost, paid:paidState, status:statusState, partUsed, date:Date.now()});
+  modalOpen=null; render();
+  await saveRepairs(); if(partUsed) await saveParts();
+}
+async function submitExpense(){
+  const desc=document.getElementById('f-desc').value.trim();
+  const category=document.getElementById('f-category').value;
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  if(!desc||isNaN(amount)){ alert('من فضلك اكتب الوصف والمبلغ'); return; }
+  expenses.push({id:uid(), desc, category, amount, date:Date.now()});
+  modalOpen=null; render(); await saveExpenses();
+}
+async function submitPart(){
+  const name=document.getElementById('f-pname').value.trim();
+  const qty=parseFloat(document.getElementById('f-pqty').value);
+  const threshold=parseFloat(document.getElementById('f-pthreshold').value);
+  const wholesale=parseFloat(document.getElementById('f-pwholesale').value);
+  const sell=parseFloat(document.getElementById('f-psell').value);
+  if(!name||isNaN(qty)||isNaN(wholesale)||isNaN(sell)){ alert('من فضلك املأ اسم المنتج والكمية وسعر الجملة وسعر البيع'); return; }
+  let logEntry=null;
+  if(editingPartId){
+    const p = parts.find(x=>x.id===editingPartId);
+    const oldQty = Number(p.qty);
+    p.name=name; p.qty=qty; p.threshold=isNaN(threshold)?2:threshold; p.wholesale=wholesale; p.sell=sell;
+    if(qty>oldQty){ const delta=qty-oldQty; logEntry={id:uid(), partId:p.id, partName:name, qtyAdded:delta, cost:delta*wholesale, date:Date.now()}; }
+  } else {
+    const newPart={id:uid(), name, qty, threshold:isNaN(threshold)?2:threshold, wholesale, sell, date:Date.now()};
+    parts.push(newPart);
+    logEntry={id:uid(), partId:newPart.id, partName:name, qtyAdded:qty, cost:qty*wholesale, date:Date.now()};
+  }
+  modalOpen=null; editingPartId=null; render();
+  await saveParts();
+  if(logEntry){ stockLog.push(logEntry); await saveStockLog(); }
+}
+async function submitDamaged(){
+  const p = parts.find(x=>x.id===damagedForPartId);
+  const qty=parseFloat(document.getElementById('f-dqty').value);
+  const reason=document.getElementById('f-dreason').value.trim();
+  if(!p||isNaN(qty)||qty<=0){ alert('من فضلك اكتب كمية صحيحة'); return; }
+  if(qty>Number(p.qty)){ alert('الكمية التالفة أكبر من الكمية المتاحة في المخزون'); return; }
+  p.qty = Number(p.qty) - qty;
+  damaged.push({id:uid(), partId:p.id, partName:p.name, qty, value: qty*Number(p.wholesale), reason, date:Date.now()});
+  modalOpen=null; damagedForPartId=null; render();
+  await saveParts(); await saveDamaged();
+}
+async function submitSale(){
+  const p = parts.find(x=>x.id===sellForPartId);
+  const qty=parseFloat(document.getElementById('f-sqty').value);
+  const price=parseFloat(document.getElementById('f-sprice').value);
+  if(!p||isNaN(qty)||qty<=0||isNaN(price)){ alert('من فضلك اكتب كمية وسعر صحيحين'); return; }
+  if(qty>Number(p.qty)){ alert('الكمية المطلوبة أكبر من المتاح في المخزون'); return; }
+  p.qty = Number(p.qty) - qty;
+  const total = qty*price;
+  const profit = (price - Number(p.wholesale))*qty;
+  sales.push({id:uid(), partId:p.id, partName:p.name, qty, unitPrice:price, wholesale:Number(p.wholesale), total, profit, date:Date.now()});
+  modalOpen=null; sellForPartId=null; render();
+  await saveParts(); await saveSales();
+}
+
+function editPart(id){ editingPartId=id; modalOpen='part'; render(); }
+function openDamagedModal(id){ damagedForPartId=id; modalOpen='damaged'; render(); }
+function openSellModal(id){ sellForPartId=id; modalOpen='sell'; render(); }
+function openAdjustQtyModal(id){ adjustQtyForPartId=id; statusState='received'; modalOpen='adjustqty'; render(); }
+async function submitAdjustQty(){
+  const p = parts.find(x=>x.id===adjustQtyForPartId);
+  const qty = parseFloat(document.getElementById('f-aqty').value);
+  if(!p||isNaN(qty)||qty<=0){ alert('من فضلك اكتب كمية صحيحة'); return; }
+  const isAdd = statusState==='received';
+  if(!isAdd && qty>Number(p.qty)){ alert('الكمية المطلوب خصمها أكبر من الكمية المتاحة في المخزون'); return; }
+  const signedQty = isAdd ? qty : -qty;
+  p.qty = Number(p.qty) + signedQty;
+  stockLog.push({id:uid(), partId:p.id, partName:p.name, qtyAdded:signedQty, cost: signedQty*Number(p.wholesale), date:Date.now()});
+  modalOpen=null; adjustQtyForPartId=null; render();
+  await saveParts(); await saveStockLog();
+}
+function openInvoiceModal(){ draftInvoice=[{partId:'',qty:1,unitPrice:0}]; modalOpen='invoice'; render(); }
+function addInvoiceRow(){ draftInvoice.push({partId:'',qty:1,unitPrice:0}); render(); }
+function removeInvoiceRow(idx){ draftInvoice.splice(idx,1); render(); }
+function onInvoicePartChange(idx, partId){
+  const p = parts.find(x=>x.id===partId);
+  draftInvoice[idx].partId = partId;
+  draftInvoice[idx].unitPrice = p ? Number(p.sell) : 0;
+  render();
+}
+function onInvoiceQtyInput(idx, val){ draftInvoice[idx].qty = parseFloat(val)||0; updateInvoiceTotalDisplay(); }
+function onInvoicePriceInput(idx, val){ draftInvoice[idx].unitPrice = parseFloat(val)||0; updateInvoiceTotalDisplay(); }
+function updateInvoiceTotalDisplay(){
+  const el = document.getElementById('invoice-total-display');
+  if(!el) return;
+  const total = draftInvoice.reduce((s,r)=>s+(Number(r.qty)||0)*(Number(r.unitPrice)||0),0);
+  el.textContent = money(total);
+}
+function toggleInvoice(id){ expandedInvoiceId = expandedInvoiceId===id ? null : id; render(); }
+
+async function submitInvoice(){
+  const rows = draftInvoice.filter(r=>r.partId && Number(r.qty)>0);
+  if(rows.length===0){ alert('من فضلك اختار صنف واحد على الأقل وحدد الكمية'); return; }
+  const neededByPart = {};
+  for(const r of rows){ neededByPart[r.partId] = (neededByPart[r.partId]||0) + Number(r.qty); }
+  for(const partId in neededByPart){
+    const p = parts.find(x=>x.id===partId);
+    if(!p || neededByPart[partId] > Number(p.qty)){
+      alert('الكمية المطلوبة من "'+(p?p.name:'صنف')+'" أكبر من المتاح في المخزون');
+      return;
+    }
+  }
+  const items = rows.map(r=>{
+    const p = parts.find(x=>x.id===r.partId);
+    const qty = Number(r.qty), unitPrice = Number(r.unitPrice)||0, wholesale = Number(p.wholesale);
+    return {partId:p.id, partName:p.name, qty, unitPrice, wholesale, lineTotal: qty*unitPrice, lineProfit:(unitPrice-wholesale)*qty};
+  });
+  for(const partId in neededByPart){
+    const p = parts.find(x=>x.id===partId);
+    p.qty = Number(p.qty) - neededByPart[partId];
+  }
+  const total = items.reduce((s,it)=>s+it.lineTotal,0);
+  const profit = items.reduce((s,it)=>s+it.lineProfit,0);
+  invoices.push({id:uid(), items, total, profit, date:Date.now()});
+  modalOpen=null; draftInvoice=[]; render();
+  await saveParts(); await saveInvoices();
+}
+async function deleteInvoice(id){ invoices=invoices.filter(i=>i.id!==id); render(); await saveInvoices(); }
+
+async function deleteRepair(id){ repairs=repairs.filter(r=>r.id!==id); render(); await saveRepairs(); }
+async function deleteExpense(id){ expenses=expenses.filter(e=>e.id!==id); render(); await saveExpenses(); }
+async function deletePart(id){ if(!confirm('حذف المنتج نهائياً؟')) return; parts=parts.filter(p=>p.id!==id); render(); await saveParts(); }
+async function deleteDamaged(id){ damaged=damaged.filter(d=>d.id!==id); render(); await saveDamaged(); }
+async function deleteSale(id){ sales=sales.filter(s=>s.id!==id); render(); await saveSales(); }
+
+function exportBackup(){
+  const backup = { exportedAt:new Date().toISOString(), repairs, expenses, parts, damaged, sales, stockLog, invoices };
+  const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'نسخة-احتياطية-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function handleImportFile(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!confirm('استيراد النسخة الاحتياطية هيستبدل كل البيانات الحالية. متأكد؟')) return;
+      repairs = data.repairs||[]; expenses = data.expenses||[]; parts = data.parts||[];
+      damaged = data.damaged||[]; sales = data.sales||[]; stockLog = data.stockLog||[]; invoices = data.invoices||[];
+      await saveRepairs(); await saveExpenses(); await saveParts(); await saveDamaged(); await saveSales(); await saveStockLog(); await saveInvoices();
+      modalOpen=null; render();
+      alert('تم استرجاع النسخة الاحتياطية بنجاح');
+    }catch(err){ alert('الملف غير صالح، تأكد إنه نفس ملف النسخة الاحتياطية'); }
+  };
+  reader.readAsText(file);
+}
+
+loadData();
+</script>
+</body>
+</html>
